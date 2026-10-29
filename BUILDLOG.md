@@ -3,6 +3,18 @@
 Submission deadline: **Nov 5, 2026 11:00 JST**. Design doc:
 `~/workspace/goals/meta-global-ai-developer-hackathon/files/project-design.md`
 
+## Development provenance
+
+Created entirely through conversation with **Muse** (Meta's personal
+AI agent) **on the author's iPad** — direction in Japanese chat; all
+research, design, coding, testing and GitHub pushes by Muse. The
+author personally performed only account-holder operations: Google
+sign-in to Cerebral Valley, decision choices presented by Muse, and
+creating the empty public GitHub repository (Muse's GitHub App
+returned a permission error on repository creation). See the README's
+"How this project was built" section. Recorded at the author's
+request on 2026-10-29.
+
 ## Design reference (important provenance note)
 
 The user has an earlier, pre-hackathon project —
@@ -80,6 +92,14 @@ structure in this repo's own 7-agent design.
     --server.port 8765` started and served **HTTP 200** on
     localhost:8765 within ~2s; stopped after the check.
 
+## 2026-10-29 (Day 0, late) — published on GitHub + provenance note ✅
+
+- Author created the empty public repo; Muse pushed the initial
+  commit (14 files, `main`) and verified the listing on GitHub.
+- At the author's request, the iPad + Muse development provenance
+  was documented in the README ("How this project was built") and in
+  the "Development provenance" section above.
+
 ## Remaining
 
 - [ ] **Real Meta Model API connection** — needs `MODEL_API_KEY` from
@@ -87,9 +107,11 @@ structure in this repo's own 7-agent design.
       the claim on 2026-10-29). Then: `LLM_MODE=meta` run for NVDA +
       7203.T, prompt tuning, verify structured-JSON decision parsing
       against real Muse Spark output.
-- [ ] **GitHub public repo creation** — awaiting user permission
-      (project/repo name to confirm: "Finance Agents" /
-      `hackathon-finance-agents`).
+- [x] **GitHub public repo** — created by the author on 2026-10-29
+      (the Muse GitHub App could not create repositories); Muse
+      pushed the initial commit (14 files) to
+      [masasikatano/hackathon-finance-agents](https://github.com/masasikatano/hackathon-finance-agents)
+      and verified the files on GitHub.
 - [ ] **Demo video** (3 min) — outline in the design doc §9; record
       after the live-LLM run works; keep a mock-mode take as insurance.
 - [ ] Optional stretch: bear rebuttal round, 3-way risk debate,

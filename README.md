@@ -10,6 +10,28 @@ BUY / HOLD / SELL call with a transparent reasoning trail.
 
 > Educational demo only — not financial advice.
 
+## How this project was built — a note on provenance
+
+This project was created **entirely through conversation with Muse,
+Meta's personal AI agent, on the author's iPad**. The author never
+opened an IDE or a terminal for this project. Every step — verifying
+the hackathon registration on Cerebral Valley, researching the Meta
+Model API, designing the agent pipeline, writing and testing all of
+the code in this repository, and pushing it to GitHub — was directed
+by the author in chat (in Japanese) and carried out by Muse.
+
+The author's own hands-on actions were limited to account operations
+only the account holder can perform: signing in to Cerebral Valley
+with Google, answering Muse's decision prompts (build the project,
+defer the API-credit claim for later, publish the code on GitHub),
+and creating this empty public repository — Muse's GitHub App could
+not create repositories (it returned a permission error), so the
+author created the repo and Muse pushed the code into it.
+
+We document this openly because it is part of the story: this
+hackathon entry was produced from an iPad, through chat alone — a
+small demonstration of what an agentic assistant makes possible.
+
 ## Quick start
 
 ```bash
@@ -92,4 +114,5 @@ BUILDLOG.md                day-by-day build log
 - [ ] Live Meta Model API run with Muse Spark 1.3 (needs MODEL_API_KEY)
 - [ ] Debate round 2 (bull rebuttal) + charts in the UI
 - [ ] Japanese UI toggle, PDF export of the report
-- [ ] Public GitHub repo + 3-minute demo video (see BUILDLOG.md)
+- [x] Public GitHub repo (this repo, published 2026-10-29)
+- [ ] 3-minute demo video (see BUILDLOG.md)
