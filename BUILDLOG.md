@@ -159,8 +159,45 @@ structure in this repo's own 7-agent design.
 - This also unblocks the demo-video recording route: the final take
   can be recorded against this public URL instead of localhost.
 
+## 2026-10-30 (Day 1) — Groq provider added (development stand-in) ✅
+
+- User approved using Groq's free tier as a **development stand-in
+  only**; the final submission still runs on Muse Spark via the Meta
+  Model API.
+- `llm.py`: Meta/Groq now share an `OpenAICompatibleClient` base
+  (injectable `transport` for offline tests; minimal, tolerant request
+  params — no `n`, temperature 0.4). New `GroqClient`
+  (`LLM_MODE=groq`, `GROQ_API_KEY`, base
+  `https://api.groq.com/openai/v1`, `GROQ_MODEL` default
+  `openai/gpt-oss-120b`). Explicit `LLM_MODE=groq` without a key fails
+  loudly instead of silently falling back to mock. `describe_llm()`
+  exposes the honest label for UIs.
+- Honest labelling: pipeline results carry `llm_label`; the report
+  header prints e.g. `LLM: groq (openai/gpt-oss-120b) — development
+  stand-in, not Meta Model API`. The Streamlit sidebar shows the same
+  label, and the app now maps Streamlit secrets (`LLM_MODE`,
+  `GROQ_API_KEY`, `MODEL_API_KEY`, …) into env vars at startup. The
+  shared disclaimer no longer claims a mock LLM unconditionally.
+- `agents.py`: decision parsing hardened for real-model output —
+  prose/code-fence-wrapped JSON (already first-`{`..last-`}`), rating
+  validated against BUY/HOLD/SELL, confidence clamped to 0..1.
+- Tests: new `tests/test_groq_client.py` (offline, fake transport)
+  verifies the request URL, `Authorization: Bearer` header, model,
+  tolerant params, response parsing, the stand-in label, the
+  missing-key error, and fenced-JSON decision parsing. Full suite
+  passes under both system and venv Python; mock CLI run unchanged
+  (HOLD 62%); Streamlit headless start still serves HTTP 200.
+- `.env.example` + README updated (Groq section labelled dev-only,
+  with a warning that the free lineup is volatile — check
+  console.groq.com; `llama-3.3-70b-versatile` reportedly left the free
+  tier in Aug 2026).
+
 ## Remaining
 
+- [ ] **Live Groq run (dev)** — the user supplies `GROQ_API_KEY` via
+      secure entry (never in chat/repo), then: `LLM_MODE=groq` runs
+      for NVDA + 7203.T with real data, prompt tuning against a real
+      LLM's prose, and optionally the same key as a Streamlit secret.
 - [ ] **Real Meta Model API connection** — needs `MODEL_API_KEY` from
       dev.meta.ai, which follows the $150 credit claim (user deferred
       the claim on 2026-10-29). Then: `LLM_MODE=meta` run for NVDA +

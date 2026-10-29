@@ -105,11 +105,18 @@ class DecisionAgent(BaseAgent):
     def run(self, payload) -> dict:
         raw = self.llm.chat(self.SYSTEM, _ctx(payload))
         try:
+            # Models often wrap the JSON in prose or a ```json fence —
+            # take everything from the first "{" to the last "}".
             start, end = raw.index("{"), raw.rindex("}") + 1
             parsed = json.loads(raw[start:end])
+            rating = str(parsed.get("rating", "HOLD")).upper()
+            if rating not in {"BUY", "HOLD", "SELL"}:
+                rating = "HOLD"
+            confidence = float(parsed.get("confidence", 0.5))
+            confidence = min(1.0, max(0.0, confidence))
             return {
-                "rating": str(parsed.get("rating", "HOLD")).upper(),
-                "confidence": float(parsed.get("confidence", 0.5)),
+                "rating": rating,
+                "confidence": confidence,
                 "summary": str(parsed.get("summary", "")),
             }
         except Exception:

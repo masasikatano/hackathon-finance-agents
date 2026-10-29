@@ -96,6 +96,41 @@ The Meta Model API is OpenAI-compatible (`https://api.meta.ai/v1`,
 provider abstraction (`src/finance_agents/llm.py`), so the endpoint,
 model and provider can be swapped without touching the agents.
 
+## Development stand-in: Groq free tier (dev only)
+
+While the Meta Model API credits / key are pending, the pipeline can
+run against a **real** LLM via [Groq](https://console.groq.com)'s free
+tier, so development and prompt tuning don't have to wait:
+
+```
+LLM_MODE=groq
+GROQ_API_KEY=<your free key from console.groq.com>
+GROQ_MODEL=openai/gpt-oss-120b
+```
+
+**This is a development stand-in only.** The final hackathon
+submission runs on **Muse Spark via the Meta Model API**
+(`LLM_MODE=meta`, above). Reports produced under Groq say so honestly:
+the report header and the app sidebar print
+`LLM: groq (<model>) — development stand-in, not Meta Model API`.
+
+Notes:
+
+- Groq's API is OpenAI-compatible (`https://api.groq.com/openai/v1`),
+  so it drops into the same provider abstraction; switching back to
+  Meta is an env change only.
+- Default model `openai/gpt-oss-120b` (strong reasoning model).
+  Alternatives verified live on the author's free account
+  (2026-10-30): `openai/gpt-oss-20b`, `qwen/qwen3.8-27b` — no Llama
+  chat models on this tier. **The free lineup changes often** — check
+  [console.groq.com](https://console.groq.com) for the current free
+  list and set `GROQ_MODEL` accordingly.
+- On Streamlit Cloud, set the same keys (`LLM_MODE`, `GROQ_API_KEY`,
+  `GROQ_MODEL`) as app secrets instead of a `.env` file; the app maps
+  secrets into the environment at startup.
+- Offline test (fake transport, no network/key):
+  `python3 tests/test_groq_client.py`.
+
 ## Layout
 
 ```
@@ -103,11 +138,12 @@ app.py                     Streamlit UI
 run_demo.py                CLI demo (real data + MockLLM by default)
 src/finance_agents/
   config.py                env-based settings (.env supported)
-  llm.py                   LLM providers: MockLLM + MetaModelClient
+  llm.py                   LLM providers: MockLLM + MetaModelClient + GroqClient (dev)
   data.py                  data providers: mock + yfinance (+ per-call fallback)
   agents.py                the 7 agent roles (one prompt each)
   pipeline.py              orchestration + Markdown report rendering
 tests/test_pipeline_mock.py
+tests/test_groq_client.py
 BUILDLOG.md                day-by-day build log
 ```
 
@@ -116,6 +152,7 @@ BUILDLOG.md                day-by-day build log
 - [x] Mock pipeline end-to-end
 - [x] Real data via yfinance (full indicators, US + JP tickers, mock fallback)
 - [x] Streamlit app starts (headless check)
+- [x] Groq free-tier provider (development stand-in; needs GROQ_API_KEY for a live run)
 - [ ] Live Meta Model API run with Muse Spark 1.3 (needs MODEL_API_KEY)
 - [ ] Debate round 2 (bull rebuttal) + charts in the UI
 - [ ] Japanese UI toggle, PDF export of the report

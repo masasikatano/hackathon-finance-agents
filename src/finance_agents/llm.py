@@ -1,18 +1,27 @@
 """LLM provider abstraction.
 
-Two providers behind one interface (`chat(system, user) -> str`):
+Providers behind one interface (`chat(system, user) -> str`):
 
 * ``MockLLM`` — deterministic, offline, no API key. Used for development,
   tests and the demo fallback. It inspects the agent role in the system
   prompt and returns a structured, data-aware canned answer.
 * ``MetaModelClient`` — Meta Model API (https://api.meta.ai/v1).
   The API is OpenAI-compatible: POST /chat/completions with
-  ``Authorization: Bearer $MODEL_API_KEY``. Implemented with the standard
-  library only, so the core pipeline runs anywhere; if the ``openai``
-  package is installed it can be swapped in trivially (same base_url/key).
+  ``Authorization: Bearer $MODEL_API_KEY``. **This is the primary
+  provider: the hackathon submission runs on Muse Spark via this API.**
+* ``GroqClient`` — Groq (https://api.groq.com/openai/v1), also
+  OpenAI-compatible. **Development stand-in ONLY** (free tier, used to
+  develop and prompt-tune against a real LLM while the Meta credits /
+  API key are pending). It is never presented as the Meta Model API:
+  its ``label`` says so everywhere it is printed.
 
-To add another provider later (OpenAI, local model, ...), implement the
-same two-method protocol and register it in ``build_llm``.
+The HTTP providers share ``OpenAICompatibleClient`` (standard library
+only, so the core pipeline runs anywhere). A ``transport`` callable can
+be injected for offline tests: ``transport(url, headers, payload) ->
+parsed JSON dict``.
+
+To add another provider later, implement the same protocol and register
+it in ``build_llm``.
 """
 from __future__ import annotations
 
@@ -26,6 +35,7 @@ class MockLLM:
     """Offline stand-in that keeps the whole pipeline runnable without a key."""
 
     name = "mock"
+    label = "mock"
 
     def chat(self, system: str, user: str) -> str:
         role = system.lower()
@@ -83,17 +93,34 @@ class MockLLM:
         return "Analysis complete."
 
 
-class MetaModelClient:
-    """Meta Model API client (OpenAI-compatible Chat Completions surface)."""
+def _urllib_transport(url: str, headers: dict, payload: dict) -> dict:
+    """Default transport: POST JSON via urllib, return the parsed body."""
+    req = urllib.request.Request(
+        url,
+        data=json.dumps(payload).encode("utf-8"),
+        headers=headers,
+        method="POST",
+    )
+    with urllib.request.urlopen(req, timeout=120) as resp:
+        return json.loads(resp.read().decode("utf-8"))
 
-    name = "meta"
 
-    def __init__(self, settings: Settings):
-        if not settings.model_api_key:
-            raise ValueError("MODEL_API_KEY is not set (copy .env.example to .env).")
-        self.base = settings.meta_api_base.rstrip("/")
-        self.model = settings.meta_model
-        self.api_key = settings.model_api_key
+class OpenAICompatibleClient:
+    """Shared client for OpenAI-compatible Chat Completions endpoints.
+
+    Request parameters are deliberately minimal and tolerant: no ``n``
+    (providers like Groq require n=1, the default), temperature kept
+    inside the range every provider accepts.
+    """
+
+    name = "openai-compatible"
+    label = "openai-compatible"
+
+    def __init__(self, base: str, model: str, api_key: str, transport=None):
+        self.base = base.rstrip("/")
+        self.model = model
+        self.api_key = api_key
+        self._transport = transport or _urllib_transport
 
     def chat(self, system: str, user: str) -> str:
         payload = {
@@ -103,23 +130,88 @@ class MetaModelClient:
                 {"role": "user", "content": user},
             ],
             "temperature": 0.4,
+            # Reasoning models (e.g. gpt-oss) spend completion tokens on
+            # hidden reasoning before the visible answer — keep headroom
+            # so the structured JSON decision is not truncated.
+            "max_tokens": 2048,
         }
-        req = urllib.request.Request(
+        data = self._transport(
             f"{self.base}/chat/completions",
-            data=json.dumps(payload).encode("utf-8"),
-            headers={
+            {
                 "Authorization": f"Bearer {self.api_key}",
                 "Content-Type": "application/json",
+                # Groq sits behind Cloudflare, which rejects the default
+                # python-urllib user agent with HTTP 403 (error 1010).
+                "User-Agent": "curl/8.5.0",
             },
-            method="POST",
+            payload,
         )
-        with urllib.request.urlopen(req, timeout=120) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
         return data["choices"][0]["message"]["content"]
 
 
+class MetaModelClient(OpenAICompatibleClient):
+    """Meta Model API client (OpenAI-compatible Chat Completions surface)."""
+
+    name = "meta"
+
+    def __init__(self, settings: Settings, transport=None):
+        if not settings.model_api_key:
+            raise ValueError("MODEL_API_KEY is not set (copy .env.example to .env).")
+        super().__init__(
+            settings.meta_api_base,
+            settings.meta_model,
+            settings.model_api_key,
+            transport=transport,
+        )
+        self.label = f"meta ({self.model})"
+
+
+class GroqClient(OpenAICompatibleClient):
+    """Groq client — DEVELOPMENT stand-in only, not the Meta Model API."""
+
+    name = "groq"
+
+    def __init__(self, settings: Settings, transport=None):
+        if not settings.groq_api_key:
+            raise ValueError("GROQ_API_KEY is not set (copy .env.example to .env).")
+        super().__init__(
+            settings.groq_api_base,
+            settings.groq_model,
+            settings.groq_api_key,
+            transport=transport,
+        )
+        self.label = (
+            f"groq ({self.model}) — development stand-in, not Meta Model API"
+        )
+
+
+def describe_llm(settings: Settings) -> str:
+    """Human label for the provider these settings would select.
+
+    Used by UIs to show the active mode without building a client (and
+    without raising when a key is missing).
+    """
+    if settings.llm_mode == "meta":
+        if settings.model_api_key:
+            return f"meta ({settings.meta_model})"
+        return "mock (LLM_MODE=meta but MODEL_API_KEY is not set)"
+    if settings.llm_mode == "groq":
+        if settings.groq_api_key:
+            return (
+                f"groq ({settings.groq_model}) — development stand-in, "
+                "not Meta Model API"
+            )
+        return "groq — not configured (GROQ_API_KEY is not set)"
+    return "mock"
+
+
 def build_llm(settings: Settings):
-    """Factory: Meta client when configured, otherwise the mock."""
+    """Factory: Meta (primary) / Groq (dev stand-in) when configured,
+    otherwise the mock."""
     if settings.use_meta:
         return MetaModelClient(settings)
+    if settings.llm_mode == "groq":
+        # Explicit mode with no key is a configuration error — fail
+        # loudly instead of silently reporting Groq while running mock.
+        return GroqClient(settings)
     return MockLLM()

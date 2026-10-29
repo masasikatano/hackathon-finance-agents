@@ -11,18 +11,28 @@ from dataclasses import dataclass
 
 @dataclass
 class Settings:
-    # "mock" (default, offline, no key needed) or "meta" (Meta Model API)
+    # "mock" (default, offline, no key needed), "meta" (Meta Model API —
+    # the primary provider; the hackathon submission runs on this) or
+    # "groq" (Groq free tier — DEVELOPMENT stand-in only, see README)
     llm_mode: str = "mock"
     # Meta Model API — https://dev.meta.ai (dashboard / API keys)
     model_api_key: str = ""
     meta_api_base: str = "https://api.meta.ai/v1"
     meta_model: str = "muse-spark-1.3"
+    # Groq (development stand-in only) — https://console.groq.com
+    groq_api_key: str = ""
+    groq_api_base: str = "https://api.groq.com/openai/v1"
+    groq_model: str = "openai/gpt-oss-120b"
     # Market-data source: "mock" (default) or "yfinance"
     data_mode: str = "mock"
 
     @property
     def use_meta(self) -> bool:
         return self.llm_mode == "meta" and bool(self.model_api_key)
+
+    @property
+    def use_groq(self) -> bool:
+        return self.llm_mode == "groq" and bool(self.groq_api_key)
 
 
 def _load_dotenv() -> None:
@@ -46,5 +56,8 @@ def get_settings() -> Settings:
         model_api_key=os.getenv("MODEL_API_KEY", ""),
         meta_api_base=os.getenv("META_API_BASE", "https://api.meta.ai/v1"),
         meta_model=os.getenv("META_MODEL", "muse-spark-1.3"),
+        groq_api_key=os.getenv("GROQ_API_KEY", ""),
+        groq_api_base=os.getenv("GROQ_API_BASE", "https://api.groq.com/openai/v1"),
+        groq_model=os.getenv("GROQ_MODEL", "openai/gpt-oss-120b"),
         data_mode=os.getenv("DATA_MODE", "mock").lower(),
     )
