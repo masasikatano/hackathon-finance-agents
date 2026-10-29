@@ -1,0 +1,8 @@
+# Core pipeline runs on the Python standard library only (mock mode).
+# The packages below are needed for the UI and real market data / API use.
+streamlit>=1.37
+yfinance>=0.2.43
+pandas>=2.0
+python-dotenv>=1.0
+openai>=1.40          # optional: OpenAI SDK can target the Meta Model API base URL
+requests>=2.32
