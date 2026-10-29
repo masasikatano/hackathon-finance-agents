@@ -100,6 +100,65 @@ structure in this repo's own 7-agent design.
   was documented in the README ("How this project was built") and in
   the "Development provenance" section above.
 
+## 2026-10-29 (Day 0, late) — demo video production pack 📹
+
+- **Narration script written** (English, 419 spoken words, timed to the
+  design doc §9 outline; includes the iPad + Muse provenance
+  disclosure). Stored with the goal docs as `demo-video-script.md`.
+  Final narration audio is deliberately **not** generated yet — the
+  script may change once the live run's ticker/decision are known.
+- **Toolchain verified on the build VM:** ffmpeg/ffprobe 8.1.2
+  (libx264, AAC, libass `subtitles` filter), Playwright 1.55.1 +
+  Muse Chromium 155 (needs the image's WebGL policy launch args),
+  Noto Sans / DejaVu / Liberation fonts for subtitles. Playwright's
+  recorder component (2.3 MiB) was installed into the user cache.
+  No local TTS CLI exists — narration will be produced via Muse's
+  spoken-audio capability and mixed with ffmpeg.
+- **Blocker found:** the hardened Chromium build rejects all loopback
+  navigation (`ERR_BLOCKED_BY_LOCAL_NETWORK_ACCESS_CHECKS`), so the
+  localhost Streamlit app cannot be recorded/screenshot from the
+  agent environment directly (server itself verified healthy via
+  curl). `file://` rendering works. Full evidence: `CAPTURE-NOTES.md`
+  in the goal's `hidden_files/demo-capture-test/`.
+- **Insurance capture produced:** a real mock-mode NVDA run
+  (HOLD, 62%) was rendered into 6 storyboard frames (1440×900) and
+  assembled into `insurance-mock-capture.mp4` (48.0 s, H.264,
+  ffprobe-verified). Clearly labelled mock/storyboard — **not** the
+  final demo and not live-UI screenshots.
+
+### Demo video production checklist (final shoot)
+
+- [ ] Run the app **live** first (`LLM_MODE=meta`, Muse Spark) for
+      the chosen ticker; freeze the script's numbers to that run.
+- [ ] Record the demo segment through a route that can see the app —
+      a reachable deployment (e.g. Streamlit Cloud from this public
+      repo, key in platform secrets, never on screen) or the parent
+      agent's live-browser capture; storyboard frames from the live
+      run's outputs are the emergency fallback.
+- [ ] Generate the English narration from the final script (Muse
+      spoken-audio), segment by segment.
+- [ ] Assemble in ffmpeg: sync narration to the five segments, burn
+      in English subtitles (Noto Sans), check loudness and pacing.
+- [ ] Export MP4 (H.264 + AAC) at **≤ 3:00**, verify with ffprobe and
+      a full watch-through; confirm no API key or account screen is
+      visible anywhere.
+- [ ] Upload unlisted (e.g. YouTube), paste the link into the
+      Cerebral Valley submission form, keep the MP4 as a local backup.
+
+## 2026-10-30 (Day 1, early) — deployed to Streamlit Cloud ✅
+
+- Live app: https://hackathon-finance-agents.streamlit.app/
+  (Streamlit Community Cloud, workspace masasikatano; repo
+  masasikatano/hackathon-finance-agents, branch main, app.py;
+  no secrets configured — mock LLM + real yfinance data).
+- The author created the Streamlit account with Google and signed in
+  to GitHub in the shared browser to connect it; Muse ran the
+  sign-in verification (including the emailed code challenge via the
+  user's Gmail) and the deploy, and verified the Finance Agents UI
+  loads at the public URL.
+- This also unblocks the demo-video recording route: the final take
+  can be recorded against this public URL instead of localhost.
+
 ## Remaining
 
 - [ ] **Real Meta Model API connection** — needs `MODEL_API_KEY` from
@@ -112,8 +171,9 @@ structure in this repo's own 7-agent design.
       pushed the initial commit (14 files) to
       [masasikatano/hackathon-finance-agents](https://github.com/masasikatano/hackathon-finance-agents)
       and verified the files on GitHub.
-- [ ] **Demo video** (3 min) — outline in the design doc §9; record
-      after the live-LLM run works; keep a mock-mode take as insurance.
+- [ ] **Demo video** (3 min) — script + production pack ready (see
+      "Demo video production" entry above); final shoot waits for the
+      live-LLM run. Insurance mock capture already produced.
 - [ ] Optional stretch: bear rebuttal round, 3-way risk debate,
       price chart in the UI, Japanese UI toggle, J-Quants for JP
       fundamentals (as in the reference project) if time remains.

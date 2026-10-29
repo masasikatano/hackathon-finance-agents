@@ -10,6 +10,11 @@ BUY / HOLD / SELL call with a transparent reasoning trail.
 
 > Educational demo only — not financial advice.
 
+**▶ Live app: [hackathon-finance-agents.streamlit.app](https://hackathon-finance-agents.streamlit.app/)**
+(deployed on Streamlit Community Cloud from this repo, 2026-10-30;
+currently runs with real Yahoo Finance data + the mock LLM until the
+Meta Model API key is configured as an app secret.)
+
 ## How this project was built — a note on provenance
 
 This project was created **entirely through conversation with Muse,
