@@ -153,7 +153,7 @@ BUILDLOG.md                day-by-day build log
 - [x] Real data via yfinance (full indicators, US + JP tickers, mock fallback)
 - [x] Streamlit app starts (headless check)
 - [x] Groq free-tier provider (development stand-in; needs GROQ_API_KEY for a live run)
-- [ ] Live Meta Model API run with Muse Spark 1.3 (needs MODEL_API_KEY)
+- [x] Live Meta Model API run with Muse Spark 1.3 (done 2026-10-30; NVDA HOLD, confidence 65%)
 - [ ] Debate round 2 (bull rebuttal) + charts in the UI
 - [ ] Japanese UI toggle, PDF export of the report
 - [x] Public GitHub repo (this repo, published 2026-10-29)

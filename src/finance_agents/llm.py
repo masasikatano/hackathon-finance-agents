@@ -123,30 +123,36 @@ class OpenAICompatibleClient:
         self._transport = transport or _urllib_transport
 
     def chat(self, system: str, user: str) -> str:
-        payload = {
-            "model": self.model,
-            "messages": [
-                {"role": "system", "content": system},
-                {"role": "user", "content": user},
-            ],
-            "temperature": 0.4,
-            # Reasoning models (e.g. gpt-oss) spend completion tokens on
-            # hidden reasoning before the visible answer — keep headroom
-            # so the structured JSON decision is not truncated.
-            "max_tokens": 2048,
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+            # Groq sits behind Cloudflare, which rejects the default
+            # python-urllib user agent with HTTP 403 (error 1010).
+            "User-Agent": "curl/8.5.0",
         }
-        data = self._transport(
-            f"{self.base}/chat/completions",
-            {
-                "Authorization": f"Bearer {self.api_key}",
-                "Content-Type": "application/json",
-                # Groq sits behind Cloudflare, which rejects the default
-                # python-urllib user agent with HTTP 403 (error 1010).
-                "User-Agent": "curl/8.5.0",
-            },
-            payload,
-        )
-        return data["choices"][0]["message"]["content"]
+        # Reasoning models (gpt-oss, Muse Spark) spend completion tokens
+        # on hidden reasoning before the visible answer. Verified live
+        # 2026-10-30: Muse Spark 1.3 used 137 reasoning tokens on a
+        # trivial prompt, and a full agent prompt exhausted a 2048 budget
+        # and returned content=null. Keep generous headroom and retry
+        # once with a doubled budget if the content comes back empty.
+        for max_tokens in (8192, 16384):
+            payload = {
+                "model": self.model,
+                "messages": [
+                    {"role": "system", "content": system},
+                    {"role": "user", "content": user},
+                ],
+                "temperature": 0.4,
+                "max_tokens": max_tokens,
+            }
+            data = self._transport(
+                f"{self.base}/chat/completions", headers, payload
+            )
+            content = data["choices"][0]["message"].get("content")
+            if content:
+                return content
+        return content or ""
 
 
 class MetaModelClient(OpenAICompatibleClient):

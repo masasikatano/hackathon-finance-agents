@@ -192,17 +192,35 @@ structure in this repo's own 7-agent design.
   console.groq.com; `llama-3.3-70b-versatile` reportedly left the free
   tier in Aug 2026).
 
+## 2026-10-30 (Day 1) — Meta Model API 実接続 ✅
+
+- $150 の無料クレジットが dev.meta.ai の画面に表示され（ユーザー確認）、
+  ユーザーが API キーを発行し、安全な入力経由で Muse のコネクタ
+  （custom.meta-model-api）に接続した。キー自体はリポジトリにも
+  ログにも残っていない。
+- モデル一覧で muse-spark-1.3 に加えて muse-wonder-1.0 の提供を
+  このアカウントで初めて確認した。
+- Muse Spark 1.3 は推論トークンを消費するモデルで、初回の実パイプ
+  ライン実行では `max_tokens: 2048` を推論で使い切り、内容が null に
+  なる事象が発生した。`llm.py` を修正し、上限を 8192 に引き上げ、
+  空の場合は 16384 で1回リトライするようにした。オフラインテストは
+  合格。
+- 修正後に NVDA を実データ（yfinance）で実行し、成功した。判定は
+  HOLD、信頼度65パーセント、価格は2026-10-29時点で213.66ドル。
+  レポート見出しに LLM: meta (muse-spark-1.3) と正しく表示される。
+- 残りは最終デモ動画の本撮影と Cerebral Valley への提出（締切は
+  2026年11月5日11時 JST）。
+
 ## Remaining
 
 - [ ] **Live Groq run (dev)** — the user supplies `GROQ_API_KEY` via
       secure entry (never in chat/repo), then: `LLM_MODE=groq` runs
       for NVDA + 7203.T with real data, prompt tuning against a real
       LLM's prose, and optionally the same key as a Streamlit secret.
-- [ ] **Real Meta Model API connection** — needs `MODEL_API_KEY` from
-      dev.meta.ai, which follows the $150 credit claim (user deferred
-      the claim on 2026-10-29). Then: `LLM_MODE=meta` run for NVDA +
-      7203.T, prompt tuning, verify structured-JSON decision parsing
-      against real Muse Spark output.
+- [x] **Real Meta Model API connection** — 2026-10-30に完了（下記の
+      「2026-10-30 (Day 1) — Meta Model API 実接続」参照）。
+      `LLM_MODE=meta` で NVDA の実データ実行が成功し、構造化JSONの
+      判定パースも実 Muse Spark 出力で確認済み。7203.T の実行は任意。
 - [x] **GitHub public repo** — created by the author on 2026-10-29
       (the Muse GitHub App could not create repositories); Muse
       pushed the initial commit (14 files) to
